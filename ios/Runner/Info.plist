@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<key>NSCameraUsageDescription</key>
+	<string>Bu ilova flashlight funksiyasi uchun kameraga muhtoj</string>
+	
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Flashlight ilovasi uchun</string>
 </dict>
 </plist>

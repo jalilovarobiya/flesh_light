@@ -1,115 +1,112 @@
-// import 'package:flutter/material.dart';
-// import 'package:torch_light/torch_light.dart';
-
-// class FleshLight extends StatefulWidget {
-//   const FleshLight({super.key});
-
-//   @override
-//   State<FleshLight> createState() => _FleshLightState();
-// }
-
-// class _FleshLightState extends State<FleshLight> {
-//   bool isFleshLightOn = false;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     checkTorchAvailable();
-//   }
-
-//   @override
-//   void dispose() {
-//     if (isFleshLightOn) {
-//       TorchLight.disableTorch();
-//     }
-//     super.dispose();
-//   }
-
-//   void checkTorchAvailable() async {
-//     try {
-//       bool available = await TorchLight.isTorchAvailable();
-//       setState(() {
-//         isFleshLightOn = available;
-//       });
-//     } catch (e) {
-//       print("Torch mavjudligini tekshiring: $e");
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: isFleshLightOn ? Colors.white : Colors.black,
-//       appBar: AppBar(
-//         centerTitle: true,
-//         title: Text("Flesh light", style: TextStyle(color: Colors.white)),
-//         backgroundColor: isFleshLightOn ? Colors.grey[300] : Colors.grey[900],
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Icon(isFleshLightOn ? Icons.flash_on : Icons.flash_off),
-//             SizedBox(height: 30),
-//             Text(
-//               isFleshLightOn ? "Yoniq" : "O'chiq",
-//               style: TextStyle(
-//                 fontSize: 24,
-//                 fontWeight: FontWeight.bold,
-//                 color: isFleshLightOn ? Colors.black : Colors.white,
-//               ),
-//             ),
-//             SizedBox(height: 50),
-//             // GestureDetector(),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:torch_light/torch_light.dart';
 
 class FleshLight extends StatefulWidget {
-  const FleshLight({super.key});
+  FleshLight({super.key});
 
   @override
-  _FleshLightState createState() => _FleshLightState();
+  State<FleshLight> createState() => _FleshLightState();
 }
 
 class _FleshLightState extends State<FleshLight> {
-  static const platform = MethodChannel('flashlight');
-  bool _isOn = false;
+  bool isFleshLightOn = false;
+  bool isTorchAvailable = false;
 
-  Future<void> _toggleFlashlight() async {
+  @override
+  void initState() {
+    super.initState();
+    checkTorchAvailable();
+  }
+
+  @override
+  void dispose() {
+    if (isFleshLightOn) {
+      TorchLight.disableTorch();
+    }
+    super.dispose();
+  }
+
+  void checkTorchAvailable() async {
     try {
-      final bool result = await platform.invokeMethod('toggleFlashlight');
+      bool available = await TorchLight.isTorchAvailable();
       setState(() {
-        _isOn = result;
+        isTorchAvailable = available;
       });
-    } on PlatformException catch (e) {
-      print("Flashlight xatosi: '${e.message}'");
+    } catch (e) {
+      print("Torch mavjudligini tekshirish xatosi: $e");
+    }
+  }
+
+  Future<void> toggleFlashlight() async {
+    if (!isTorchAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bu qurilmada flashlight mavjud emas')),
+      );
+      return;
+    }
+
+    try {
+      if (isFleshLightOn) {
+        await TorchLight.disableTorch();
+      } else {
+        await TorchLight.enableTorch();
+      }
+      setState(() {
+        isFleshLightOn = !isFleshLightOn;
+      });
+    } catch (e) {
+      print("Flashlight xatosi: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Flashlight xatosi: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: isFleshLightOn ? Colors.white : Colors.black,
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text("Flesh light", style: TextStyle(color: Colors.white)),
+        backgroundColor: isFleshLightOn ? Colors.grey[300] : Colors.grey[900],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              _isOn ? Icons.flash_on : Icons.flash_off,
+              isFleshLightOn ? Icons.flash_on : Icons.flash_off,
               size: 100,
-              color: _isOn ? Colors.yellow : Colors.grey,
+              color: isFleshLightOn ? Colors.yellow : Colors.grey,
+            ),
+            SizedBox(height: 30),
+            Text(
+              isFleshLightOn ? "Yoniq" : "O'chiq",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isFleshLightOn ? Colors.black : Colors.white,
+              ),
+            ),
+            SizedBox(height: 50),
+            ElevatedButton(
+              onPressed: isTorchAvailable ? toggleFlashlight : null,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                backgroundColor: isFleshLightOn ? Colors.orange : Colors.blue,
+              ),
+              child: Text(
+                isFleshLightOn ? "O'chirish" : "Yoqish",
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _toggleFlashlight,
-              child: Text(_isOn ? "Yoqish" : "O'chirish"),
-            ),
+            if (!isTorchAvailable)
+              Text(
+                "Flashlight mavjud emas",
+                style: TextStyle(color: Colors.red, fontSize: 16),
+              ),
           ],
         ),
       ),
